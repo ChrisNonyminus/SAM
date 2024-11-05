@@ -19,11 +19,13 @@ An online version and executables for Windows can be found on the web site: http
 Compile
 =======
 
-Simply type "make" in your command prompt.
-In order to compile without SDL remove the SDL statements from the CFLAGS and LFLAGS variables in the file "Makefile".
+Using cmake in the normal way:
 
-It should compile on every UNIX-like operating system. For Windows you need Cygwin or MinGW( + libsdl).
-
+```sh
+mkdir build
+cd build
+cmake ../
+```
 
 Usage
 =====
