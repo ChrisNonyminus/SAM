@@ -5,7 +5,7 @@
 #include <algorithm>
 
 #include "reciter.h"
-#include "sam.h"
+#include "Sam.h"
 #include "WavWriter.h"
 #include "SDLOutput.h"
 

@@ -1,4 +1,4 @@
-#include "sam.h"
+#include "Sam.h"
 
 void Sam::setSpeed(uint8_t _speed) {
 	speed = _speed;
@@ -33,7 +33,7 @@ void Sam::reset() {
 	phonemeIndex[phonemeSize - 1] = 32;
 }
 
-unsigned char Sam::translate(unsigned char a, unsigned char b) {
+uint8_t Sam::translate(uint8_t a, uint8_t b) {
 	return (((unsigned int) a * b) >> 8) << 1;
 }
 
@@ -57,8 +57,8 @@ void Sam::updateFrequencyTables() {
 		freq2Data[i] = sam::render_tables::freq2data[i];
 	}
 
-	unsigned char newFrequency = 0;
-	unsigned char pos		   = 5;
+	uint8_t newFrequency = 0;
+	uint8_t pos			 = 5;
 
 	while (pos < 30) {
 		auto initialFrequency = mouthFormants5_29[pos];
@@ -84,7 +84,7 @@ void Sam::updateFrequencyTables() {
 }
 
 void Sam::checkForPhonemeEnd() {
-	for (unsigned char &i: phonemeIndex) {
+	for (uint8_t &i: phonemeIndex) {
 		if (i > 80) {
 			i = END;
 			break;
@@ -114,7 +114,7 @@ bool Sam::process(const std::string &_input) {
 }
 
 void Sam::rescaleAmplitude() {
-	for (int i = 255; i >= 0; i--) {
+	for (int i = phonemeEndMarker; i >= 0; i--) {
 		amplitude1[i] = sam::render_tables::amplitudeRescale[amplitude1[i]];
 		amplitude2[i] = sam::render_tables::amplitudeRescale[amplitude2[i]];
 		amplitude3[i] = sam::render_tables::amplitudeRescale[amplitude3[i]];
@@ -122,12 +122,12 @@ void Sam::rescaleAmplitude() {
 }
 
 void Sam::assignPitchContour() {
-	for (int i = 0; i < 256; i++) {
+	for (int i = 0; i < phonemeSize; i++) {
 		pitches[i] -= (frequency1[i] >> 1);
 	}
 }
 
-void Sam::addInflection(unsigned char inflection, unsigned char pos) {
+void Sam::addInflection(uint8_t inflection, uint8_t pos) {
 	if (pos < 30) {
 		pos = 0;
 	} else {
@@ -144,7 +144,7 @@ void Sam::addInflection(unsigned char inflection, unsigned char pos) {
 	while (pos != end) {
 		pitchPos += inflection;
 		pitches[pos] = pitchPos;
-		while ((++pos != end) && pitches[pos] == 255)
+		while ((++pos != end) && pitches[pos] == phonemeEndMarker)
 			;
 	}
 }
@@ -152,7 +152,7 @@ void Sam::addInflection(unsigned char inflection, unsigned char pos) {
 void Sam::createFrames() {
 	uint8_t tableWritePosition = 0;
 	for (int i = 0; i < phonemeSize; ++i) {
-		if (phonemeIndexOutput[i] == 255) {
+		if (phonemeIndexOutput[i] == phonemeEndMarker) {
 			break;
 		}
 
@@ -193,7 +193,7 @@ uint8_t Sam::readTable(uint8_t table, uint8_t index) {
 	}
 }
 
-void Sam::writeTable(uint8_t table, uint8_t index, unsigned char value) {
+void Sam::writeTable(uint8_t table, uint8_t index, uint8_t value) {
 	switch (table) {
 		case 168: pitches[index] = value; return;
 		case 169: frequency1[index] = value; return;
@@ -206,7 +206,7 @@ void Sam::writeTable(uint8_t table, uint8_t index, unsigned char value) {
 	}
 }
 
-void Sam::interpolate(unsigned char width, unsigned char table, unsigned char frame, char mem53) {
+void Sam::interpolate(uint8_t width, uint8_t table, uint8_t frame, char mem53) {
 	auto sign	   = (mem53 < 0);
 	auto remainder = abs(mem53) % width;
 	auto div	   = mem53 / width;
@@ -229,7 +229,7 @@ void Sam::interpolate(unsigned char width, unsigned char table, unsigned char fr
 	}
 }
 
-void Sam::interpolatePitch(unsigned char pos, unsigned char mem49, unsigned char phase3) {
+void Sam::interpolatePitch(uint8_t pos, uint8_t mem49, uint8_t phase3) {
 	auto currentWidth  = phonemeLengthOutput[pos] / 2;
 	auto nextWidth	   = phonemeLengthOutput[pos + 1] / 2;
 	auto width		   = currentWidth + nextWidth;
@@ -237,14 +237,14 @@ void Sam::interpolatePitch(unsigned char pos, unsigned char mem49, unsigned char
 	interpolate(width, 168, phase3, computedPitch);
 }
 
-unsigned char Sam::createTransitions() {
+uint8_t Sam::createTransitions() {
 	uint8_t mem49 = 0;
 	uint8_t pos	  = 0;
 	while (true) {
 		auto phoneme	  = phonemeIndexOutput[pos];
 		auto next_phoneme = phonemeIndexOutput[pos + 1];
 
-		if (next_phoneme == 255) {
+		if (next_phoneme == phonemeEndMarker) {
 			break;
 		}
 
@@ -285,8 +285,8 @@ unsigned char Sam::createTransitions() {
 	return mem49 + phonemeLengthOutput[pos];
 }
 
-void Sam::Render() {
-	if (phonemeIndexOutput[0] == 255) {
+void Sam::render() {
+	if (phonemeIndexOutput[0] == phonemeEndMarker) {
 		return;
 	}
 
@@ -317,14 +317,14 @@ void Sam::combineGlottalAndFormants(uint8_t phase1, uint8_t phase2, uint8_t phas
 	auto result = static_cast<unsigned int>(
 		sam::render_tables::multtable[sam::render_tables::sinus[phase1] | amplitude1[Y]]);
 	result += sam::render_tables::multtable[sam::render_tables::sinus[phase2] | amplitude2[Y]];
-	result += result > 255 ? 1 : 0;
+	result += result > phonemeEndMarker ? 1 : 0;
 	result += sam::render_tables::multtable[sam::render_tables::rectangle[phase3] | amplitude3[Y]];
 	result += 136;
 	result >>= 4;
 	writeOutput(0, result & 0xf);
 }
 
-unsigned char Sam::renderVoicedSample(unsigned short hi, unsigned char off, unsigned char phase1) {
+uint8_t Sam::renderVoicedSample(unsigned short hi, uint8_t off, uint8_t phase1) {
 	do {
 		uint8_t bit	   = 8;
 		uint8_t sample = sam::render_tables::sampleTable[hi + off];
@@ -341,7 +341,7 @@ unsigned char Sam::renderVoicedSample(unsigned short hi, unsigned char off, unsi
 	return off;
 }
 
-void Sam::renderUnvoicedSample(unsigned short hi, unsigned char off, unsigned char mem53) {
+void Sam::renderUnvoicedSample(unsigned short hi, uint8_t off, uint8_t mem53) {
 	do {
 		uint8_t bit	   = 8;
 		uint8_t sample = sam::render_tables::sampleTable[hi + off];
@@ -356,12 +356,12 @@ void Sam::renderUnvoicedSample(unsigned short hi, unsigned char off, unsigned ch
 	} while (++off != 0);
 }
 
-void Sam::renderSample(unsigned char *mem66, unsigned char consonantFlag, unsigned char mem49) {
+void Sam::renderSample(uint8_t *mem66, uint8_t consonantFlag, uint8_t mem49) {
 	// mem49 == current phoneme's index
 
 	// mask low three bits and subtract 1 get value to
 	// convert 0 bits on unvoiced samples.
-	unsigned char hibyte = (consonantFlag & 7) - 1;
+	uint8_t hibyte = (consonantFlag & 7) - 1;
 
 	// determine which offset to use from table { 0x18, 0x1A, 0x17, 0x17, 0x17 }
 	// T, S, Z                0          0x18
@@ -372,13 +372,13 @@ void Sam::renderSample(unsigned char *mem66, unsigned char consonantFlag, unsign
 
 	unsigned short hi = hibyte * 256;
 	// voiced sample?
-	unsigned char pitchl = consonantFlag & 248;
+	uint8_t pitchl = consonantFlag & 248;
 	if (pitchl == 0) {
 		// voiced phoneme: Z*, ZH, V*, DH
 		pitchl = pitches[mem49] >> 4;
-		*mem66 = renderVoicedSample(hi, *mem66, pitchl ^ 255);
+		*mem66 = renderVoicedSample(hi, *mem66, pitchl ^ phonemeEndMarker);
 	} else {
-		renderUnvoicedSample(hi, pitchl ^ 255, sam::render_tables::tab48426[hibyte]);
+		renderUnvoicedSample(hi, pitchl ^ phonemeEndMarker, sam::render_tables::tab48426[hibyte]);
 	}
 }
 
@@ -391,20 +391,20 @@ void Sam::renderSample(unsigned char *mem66, unsigned char consonantFlag, unsign
 // To simulate them being driven by the glottal pulse, the waveforms are
 // reset at the beginning of each glottal pulse.
 //
-void Sam::processFrames(unsigned char mem48) {
+void Sam::processFrames(uint8_t mem48) {
 	uint8_t speedcounter = 72;
 	uint8_t phase1		 = 0;
 	uint8_t phase2		 = 0;
 	uint8_t phase3		 = 0;
 	uint8_t mem66		 = 0;
 
-	unsigned char Y = 0;
+	uint8_t Y = 0;
 
-	unsigned char glottal_pulse = pitches[0];
-	unsigned char mem38			= glottal_pulse - (glottal_pulse >> 2); // mem44 * 0.75
+	uint8_t glottal_pulse = pitches[0];
+	uint8_t mem38		  = glottal_pulse - (glottal_pulse >> 2); // mem44 * 0.75
 
 	while (mem48) {
-		unsigned char flags = sampledConsonantFlag[Y];
+		uint8_t flags = sampledConsonantFlag[Y];
 
 		// unvoiced sampled phoneme?
 		if (flags & 248) {
@@ -460,17 +460,17 @@ void Sam::processFrames(unsigned char mem48) {
 }
 
 void Sam::prepareOutput() {
-	unsigned char srcpos  = 0; // Position in source
-	unsigned char destpos = 0; // Position in output
+	uint8_t srcpos	= 0; // Position in source
+	uint8_t destpos = 0; // Position in output
 
 	while (true) {
-		unsigned char A				= phonemeIndex[srcpos];
+		uint8_t A					= phonemeIndex[srcpos];
 		phonemeIndexOutput[destpos] = A;
 		switch (A) {
-			case END: Render(); return;
+			case END: render(); return;
 			case BREAK:
 				phonemeIndexOutput[destpos] = END;
-				Render();
+				render();
 				destpos = 0;
 				break;
 			case 0: break;
@@ -485,11 +485,11 @@ void Sam::prepareOutput() {
 }
 
 void Sam::insertBreath() {
-	unsigned char mem54 = 255;
-	unsigned char len	= 0;
-	unsigned char index; //variable Y
+	uint8_t mem54 = phonemeEndMarker;
+	uint8_t len	  = 0;
+	uint8_t index; //variable Y
 
-	unsigned char pos = 0;
+	uint8_t pos = 0;
 
 	while ((index = phonemeIndex[pos]) != END) {
 		len += phonemeLength[pos];
@@ -529,8 +529,8 @@ void Sam::insertBreath() {
 
 void Sam::copyStress() {
 	// loop thought all the phonemes to be output
-	unsigned char pos = 0; //mem66
-	unsigned char Y;
+	uint8_t pos = 0; //mem66
+	uint8_t Y;
 	while ((Y = phonemeIndex[pos]) != END) {
 		// if CONSONANT_FLAG set, skip - only vowels get stress
 		if (sam::sam_tables::flags[Y] & 64) {
@@ -552,7 +552,7 @@ void Sam::copyStress() {
 	}
 }
 
-void Sam::insert(unsigned char position /*var57*/, unsigned char mem60, unsigned char mem59, unsigned char mem58) {
+void Sam::insert(uint8_t position /*var57*/, uint8_t mem60, uint8_t mem59, uint8_t mem58) {
 	int i;
 	for (i = 253; i >= position; i--) // ML : always keep last safe-guarding 255
 	{
@@ -566,12 +566,12 @@ void Sam::insert(unsigned char position /*var57*/, unsigned char mem60, unsigned
 	stress[position]		= mem58;
 }
 
-signed int Sam::full_match(unsigned char sign1, unsigned char sign2) {
-	unsigned char Y = 0;
+signed int Sam::fullMatch(uint8_t sign1, uint8_t sign2) {
+	uint8_t Y = 0;
 	do {
 		// GET FIRST CHARACTER AT POSITION Y IN signInputTable
 		// --> should change name to PhonemeNameTable1
-		unsigned char A = sam::sam_tables::signInputTable1[Y];
+		uint8_t A = sam::sam_tables::signInputTable1[Y];
 
 		if (A == sign1) {
 			A = sam::sam_tables::signInputTable2[Y];
@@ -582,7 +582,7 @@ signed int Sam::full_match(unsigned char sign1, unsigned char sign2) {
 	return -1;
 }
 
-signed int Sam::wild_match(unsigned char sign1) {
+signed int Sam::wildMatch(uint8_t sign1) {
 	signed int Y = 0;
 	do {
 		if (sam::sam_tables::signInputTable2[Y] == '*') {
@@ -644,22 +644,22 @@ signed int Sam::wild_match(unsigned char sign1) {
 // the index 255 is placed at the end of the phonemeIndexTable[], and the
 // function returns with a 1 indicating success.
 int Sam::parser1() {
-	unsigned char sign1;
-	unsigned char position = 0;
-	unsigned char srcpos   = 0;
+	uint8_t sign1;
+	uint8_t position = 0;
+	uint8_t srcpos	 = 0;
 
 	memset(stress, 0, phonemeSize);
 
 	while ((sign1 = input[srcpos]) != 155) { // 155 (\233) is end of line marker
 		signed int match;
-		unsigned char sign2 = input[++srcpos];
-		if ((match = full_match(sign1, sign2)) != -1) {
+		uint8_t sign2 = input[++srcpos];
+		if ((match = fullMatch(sign1, sign2)) != -1) {
 			// Matched both characters (no wildcards)
-			phonemeIndex[position++] = (unsigned char) match;
+			phonemeIndex[position++] = (uint8_t) match;
 			++srcpos; // Skip the second character of the input as we've matched it
-		} else if ((match = wild_match(sign1)) != -1) {
+		} else if ((match = wildMatch(sign1)) != -1) {
 			// Matched just the first character (with second character matching '*'
-			phonemeIndex[position++] = (unsigned char) match;
+			phonemeIndex[position++] = (uint8_t) match;
 		} else {
 			// Should be a stress character. Search through the
 			// stress table backwards.
@@ -669,7 +669,7 @@ int Sam::parser1() {
 
 			if (match == 0) return 0; // failure
 
-			stress[position - 1] = (unsigned char) match; // Set stress for prior phoneme
+			stress[position - 1] = (uint8_t) match; // Set stress for prior phoneme
 		}
 	} //while
 
@@ -680,8 +680,8 @@ int Sam::parser1() {
 //change phonemelength depedendent on stress
 void Sam::setPhonemeLength() {
 	int position = 0;
-	while (phonemeIndex[position] != 255) {
-		unsigned char A = stress[position];
+	while (phonemeIndex[position] != phonemeEndMarker) {
+		uint8_t A = stress[position];
 		if ((A == 0) || ((A & 128) != 0)) {
 			phonemeLength[position] = sam::sam_tables::phonemeLengthTable[phonemeIndex[position]];
 		} else {
@@ -692,15 +692,15 @@ void Sam::setPhonemeLength() {
 }
 
 void Sam::code41240() {
-	unsigned char pos = 0;
+	uint8_t pos = 0;
 
 	while (phonemeIndex[pos] != END) {
-		unsigned char index = phonemeIndex[pos];
+		uint8_t index = phonemeIndex[pos];
 
 		if ((sam::sam_tables::flags[index] & sam::sam_tables::FLAG_STOPCONS)) {
 			if ((sam::sam_tables::flags[index] & sam::sam_tables::FLAG_PLOSIVE)) {
-				unsigned char A;
-				unsigned char X = pos;
+				uint8_t A;
+				uint8_t X = pos;
 				while (!phonemeIndex[++X])
 					; /* Skip pause */
 				A = phonemeIndex[X];
@@ -719,19 +719,9 @@ void Sam::code41240() {
 	}
 }
 
-void Sam::changeRule(unsigned char position, unsigned char mem60, const char *descr) {
+void Sam::changeRule(uint8_t position, uint8_t mem60, const char *descr) {
 	phonemeIndex[position] = 13; //rule;
 	insert(position + 1, mem60, 0, stress[position]);
-}
-
-void Sam::drule(const char *str) {
-}
-
-void Sam::drule_pre(const char *descr, unsigned char X) {
-	drule(descr);
-}
-
-void Sam::drule_post(unsigned char X) {
 }
 
 // Rewrites the phonemes using the following rules:
@@ -758,68 +748,61 @@ void Sam::drule_post(unsigned char X) {
 //       <UNSTRESSED VOWEL> T <PAUSE> -> <UNSTRESSED VOWEL> DX <PAUSE>
 //       <UNSTRESSED VOWEL> D <PAUSE>  -> <UNSTRESSED VOWEL> DX <PAUSE>
 
-void Sam::rule_alveolar_uw(unsigned char X) {
+void Sam::applyUWAlveolarRule(uint8_t X) {
 	// ALVEOLAR flag set?
 	if (sam::sam_tables::flags[phonemeIndex[X - 1]] & sam::sam_tables::FLAG_ALVEOLAR) {
-		drule("<ALVEOLAR> UW -> <ALVEOLAR> UX");
 		phonemeIndex[X] = 16;
 	}
 }
 
-void Sam::rule_ch(unsigned char X) {
-	drule("CH -> CH CH+1");
+void Sam::applyCHRule(uint8_t X) {
 	insert(X + 1, 43, 0, stress[X]);
 }
 
-void Sam::rule_j(unsigned char X) {
-	drule("J -> J J+1");
+void Sam::applyJRule(uint8_t X) {
 	insert(X + 1, 45, 0, stress[X]);
 }
 
-void Sam::rule_g(unsigned char pos) {
+void Sam::applyGRule(uint8_t pos) {
 	// G <VOWEL OR DIPTHONG NOT ENDING WITH IY> -> GX <VOWEL OR DIPTHONG NOT ENDING WITH IY>
 	// Example: GO
 
-	unsigned char index = phonemeIndex[pos + 1];
+	uint8_t index = phonemeIndex[pos + 1];
 
 	// If dipthong ending with YX, move continue processing next phoneme
-	if ((index != 255) && ((sam::sam_tables::flags[index] & sam::sam_tables::FLAG_DIP_YX) == 0)) {
+	if ((index != phonemeEndMarker) && ((sam::sam_tables::flags[index] & sam::sam_tables::FLAG_DIP_YX) == 0)) {
 		// replace G with GX and continue processing next phoneme
-		drule("G <VOWEL OR DIPTHONG NOT ENDING WITH IY> -> GX <VOWEL OR DIPTHONG NOT ENDING WITH IY>");
 		phonemeIndex[pos] = 63; // 'GX'
 	}
 }
 
-void Sam::change(unsigned char pos, unsigned char val, const char *rule) {
-	drule(rule);
+void Sam::change(uint8_t pos, uint8_t val, const char *rule) {
 	phonemeIndex[pos] = val;
 }
 
-void Sam::rule_dipthong(unsigned char p, unsigned short pf, unsigned char pos) {
+void Sam::applyDipthongRule(uint8_t p, unsigned short pf, uint8_t pos) {
 	// <DIPTHONG ENDING WITH WX> -> <DIPTHONG ENDING WITH WX> WX
 	// <DIPTHONG NOT ENDING WITH WX> -> <DIPTHONG NOT ENDING WITH WX> YX
 	// Example: OIL, COW
 
 	// If ends with IY, use YX, else use WX
-	unsigned char A = (pf & sam::sam_tables::FLAG_DIP_YX) ? 21 : 20; // 'WX' = 20 'YX' = 21
+	uint8_t A = (pf & sam::sam_tables::FLAG_DIP_YX) ? 21 : 20; // 'WX' = 20 'YX' = 21
 
 	// Insert at WX or YX following, copying the stress
-	if (A == 20) drule("insert WX following dipthong NOT ending in IY sound");
-	else if (A == 21) drule("insert YX following dipthong ending in IY sound");
 	insert(pos + 1, A, 0, stress[pos]);
 
-	if (p == 53) rule_alveolar_uw(pos); // Example: NEW, DEW, SUE, ZOO, THOO, TOO
-	else if (p == 42) rule_ch(pos); // Example: CHEW
-	else if (p == 44) rule_j(pos); // Example: JAY
+	if (p == 53) applyUWAlveolarRule(pos); // Example: NEW, DEW, SUE, ZOO, THOO, TOO
+	else if (p == 42) applyCHRule(pos); // Example: CHEW
+	else if (p == 44) applyJRule(pos); // Example: JAY
 }
 
 void Sam::parser2() {
-	unsigned char pos = 0; //mem66;
-	unsigned char p;
+	uint8_t pos = 0; //mem66;
+	uint8_t p;
 
 	while ((p = phonemeIndex[pos]) != END) {
 		unsigned short pf;
-		unsigned char prior;
+		uint8_t prior;
 
 		if (p == 0) { // Is phoneme pause?
 			++pos;
@@ -829,7 +812,7 @@ void Sam::parser2() {
 		pf	  = sam::sam_tables::flags[p];
 		prior = phonemeIndex[pos - 1];
 
-		if ((pf & sam::sam_tables::FLAG_DIPTHONG)) rule_dipthong(p, pf, pos);
+		if ((pf & sam::sam_tables::FLAG_DIPTHONG)) applyDipthongRule(p, pf, pos);
 		else if (p == 78) changeRule(pos, 24, "UL -> AX L"); // Example: MEDDLE
 		else if (p == 79) changeRule(pos, 27, "UM -> AX M"); // Example: ASTRONOMY
 		else if (p == 80) changeRule(pos, 28, "UN -> AX N"); // Example: FUNCTION
@@ -840,7 +823,6 @@ void Sam::parser2() {
 			if (!phonemeIndex[pos + 1]) { // If following phoneme is a pause, get next
 				p = phonemeIndex[pos + 2];
 				if (p != END && (sam::sam_tables::flags[p] & sam::sam_tables::FLAG_VOWEL) && stress[pos + 2]) {
-					drule("Insert glottal stop between two stressed vowels with space between them");
 					insert(pos + 2, 31, 0, 0); // 31 = 'Q'
 				}
 			}
@@ -856,12 +838,12 @@ void Sam::parser2() {
 			//       1. The G -> GX rule intervenes
 			//       2. Reciter already replaces GS -> GZ
 			change(pos, 38, "G S -> G Z");
-		} else if (p == 60) rule_g(pos);
+		} else if (p == 60) applyGRule(pos);
 		else {
 			if (p == 72) { // 'K'
 				// K <VOWEL OR DIPTHONG NOT ENDING WITH IY> -> KX <VOWEL OR DIPTHONG NOT ENDING WITH IY>
 				// Example: COW
-				unsigned char Y = phonemeIndex[pos + 1];
+				uint8_t Y = phonemeIndex[pos + 1];
 				// If at end, replace current phoneme with KX
 				if ((sam::sam_tables::flags[Y] & sam::sam_tables::FLAG_DIP_YX) == 0
 					|| Y == END) { // VOWELS AND DIPTHONGS ENDING WITH IY SOUND flag set?
@@ -886,9 +868,9 @@ void Sam::parser2() {
 				phonemeIndex[pos] = p - 12;
 			} else if (!(pf & sam::sam_tables::FLAG_PLOSIVE)) {
 				p = phonemeIndex[pos];
-				if (p == 53) rule_alveolar_uw(pos); // Example: NEW, DEW, SUE, ZOO, THOO, TOO
-				else if (p == 42) rule_ch(pos); // Example: CHEW
-				else if (p == 44) rule_j(pos); // Example: JAY
+				if (p == 53) applyUWAlveolarRule(pos); // Example: NEW, DEW, SUE, ZOO, THOO, TOO
+				else if (p == 42) applyCHRule(pos); // Example: CHEW
+				else if (p == 44) applyJRule(pos); // Example: JAY
 			}
 
 			if (p == 69 || p == 57) { // 'T', 'D'
@@ -929,11 +911,11 @@ void Sam::adjustLengths() {
 
 	// loop index
 	{
-		unsigned char X = 0;
-		unsigned char index;
+		uint8_t X = 0;
+		uint8_t index;
 
 		while ((index = phonemeIndex[X]) != END) {
-			unsigned char loopIndex;
+			uint8_t loopIndex;
 
 			// not punctuation?
 			if ((sam::sam_tables::flags[index] & sam::sam_tables::FLAG_PUNCT) == 0) {
@@ -953,12 +935,9 @@ void Sam::adjustLengths() {
 
 				// test for fricative/unvoiced or not voiced
 				if (!(sam::sam_tables::flags[index] & sam::sam_tables::FLAG_FRICATIVE)
-					|| (sam::sam_tables::flags[index] & sam::sam_tables::FLAG_VOICED)) { //nochmal �berpr�fen
-					unsigned char A = phonemeLength[X];
-					// change phoneme length to (length * 1.5) + 1
-					drule_pre("Lengthen <FRICATIVE> or <VOICED> between <VOWEL> and <PUNCTUATION> by 1.5", X);
-					phonemeLength[X] = (A >> 1) + A + 1;
-					drule_post(X);
+					|| (sam::sam_tables::flags[index] & sam::sam_tables::FLAG_VOICED)) {
+					uint8_t length	 = phonemeLength[X];
+					phonemeLength[X] = (length >> 1) + length + 1;
 				}
 			} while (++X != loopIndex);
 			X++;
@@ -968,11 +947,11 @@ void Sam::adjustLengths() {
 	// Similar to the above routine, but shorten vowels under some circumstances
 
 	// Loop through all phonemes
-	unsigned char loopIndex = 0;
-	unsigned char index;
+	uint8_t loopIndex = 0;
+	uint8_t index;
 
 	while ((index = phonemeIndex[loopIndex]) != END) {
-		unsigned char X = loopIndex;
+		uint8_t X = loopIndex;
 
 		if (sam::sam_tables::flags[index] & sam::sam_tables::FLAG_VOWEL) {
 			index = phonemeIndex[loopIndex + 1];
@@ -980,9 +959,7 @@ void Sam::adjustLengths() {
 				if ((index == 18) || (index == 19)) { // 'RX', 'LX'
 					index = phonemeIndex[loopIndex + 2];
 					if ((sam::sam_tables::flags[index] & sam::sam_tables::FLAG_CONSONANT)) {
-						drule_pre("<VOWEL> <RX | LX> <CONSONANT> - decrease length of vowel by 1\n", loopIndex);
 						phonemeLength[loopIndex]--;
-						drule_post(loopIndex);
 					}
 				}
 			} else { // Got here if not <VOWEL>
@@ -993,17 +970,11 @@ void Sam::adjustLengths() {
 					if ((flag & sam::sam_tables::FLAG_PLOSIVE)) { // unvoiced plosive
 						// RULE: <VOWEL> <UNVOICED PLOSIVE>
 						// <VOWEL> <P*, T*, K*, KX>
-						drule_pre("<VOWEL> <UNVOICED PLOSIVE> - decrease vowel by 1/8th", loopIndex);
 						phonemeLength[loopIndex] -= (phonemeLength[loopIndex] >> 3);
-						drule_post(loopIndex);
 					}
 				} else {
-					unsigned char A;
-					drule_pre("<VOWEL> <VOICED CONSONANT> - increase vowel by 1/2 + 1\n", X - 1);
-					// decrease length
-					A						 = phonemeLength[loopIndex];
-					phonemeLength[loopIndex] = (A >> 2) + A + 1; // 5/4*A + 1
-					drule_post(loopIndex);
+					auto length				 = phonemeLength[loopIndex];
+					phonemeLength[loopIndex] = (length >> 2) + length + 1; // 5/4*A + 1
 				}
 			}
 		} else if ((sam::sam_tables::flags[index] & sam::sam_tables::FLAG_NASAL) != 0) { // nasal?
@@ -1012,7 +983,6 @@ void Sam::adjustLengths() {
 			//       Set stop consonant length to 5
 			index = phonemeIndex[++X];
 			if (index != END && (sam::sam_tables::flags[index] & sam::sam_tables::FLAG_STOPCONS)) {
-				drule("<NASAL> <STOP CONSONANT> - set nasal = 5, consonant = 6");
 				phonemeLength[X]	 = 6; // set stop consonant length to 6
 				phonemeLength[X - 1] = 5; // set nasal length to 5
 			}
@@ -1025,9 +995,6 @@ void Sam::adjustLengths() {
 				;
 
 			if (index != END && (sam::sam_tables::flags[index] & sam::sam_tables::FLAG_STOPCONS)) {
-				// FIXME, this looks wrong?
-				// RULE: <UNVOICED STOP CONSONANT> {optional silence} <STOP CONSONANT>
-				drule("<UNVOICED STOP CONSONANT> {optional silence} <STOP CONSONANT> - shorten both to 1/2 + 1");
 				phonemeLength[X]		 = (phonemeLength[X] >> 1) + 1;
 				phonemeLength[loopIndex] = (phonemeLength[loopIndex] >> 1) + 1;
 				X						 = loopIndex;
@@ -1036,14 +1003,7 @@ void Sam::adjustLengths() {
 			// RULE: <VOICED NON-VOWEL> <DIPTHONG>
 			//       Decrease <DIPTHONG> by 2
 			index = phonemeIndex[X - 1]; // prior phoneme;
-
-			// FIXME: The debug code here breaks the rule.
-			// prior phoneme a stop consonant>
-			if ((sam::sam_tables::flags[index] & sam::sam_tables::FLAG_STOPCONS) != 0)
-				drule_pre("<LIQUID CONSONANT> <DIPTHONG> - decrease by 2", X);
-
 			phonemeLength[X] -= 2; // 20ms
-			drule_post(X);
 		}
 
 		++loopIndex;

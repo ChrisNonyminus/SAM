@@ -18,7 +18,7 @@ private:
 	[[nodiscard]] int handleCH2(uint8_t ch, uint8_t mem);
 
 	uint8_t A;
-	uint8_t X;
+	uint8_t writePosition {0};
 
 	static constexpr auto inputTempBufferSize = 256;
 	uint8_t inputTemp[inputTempBufferSize]	  = {0};
