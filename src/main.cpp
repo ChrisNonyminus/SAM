@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
 	int i;
 	int phonetic = 0;
 
-	char *wavfilename = NULL;
+	char *wavfilename = nullptr;
 
 	static constexpr auto inputLength = 256;
 	unsigned char input[inputLength];
@@ -89,29 +89,20 @@ int main(int argc, char **argv) {
 				wavfilename = argv[i + 1];
 				i++;
 			} else if (strcmp(&argv[i][1], "sing") == 0) {
-				//				EnableSingmode();
 				sam.setMode(Sam::Mode::Singing);
 			} else if (strcmp(&argv[i][1], "phonetic") == 0) {
 				phonetic = 1;
 			} else if (strcmp(&argv[i][1], "pitch") == 0) {
-				auto p = static_cast<uint8_t>(std::min(atoi(argv[i + 1]), 255));
-				//				SetPitch(p);
-				sam.setPitch(p);
+				sam.setPitch(static_cast<uint8_t>(std::min(atoi(argv[i + 1]), 255)));
 				i++;
 			} else if (strcmp(&argv[i][1], "speed") == 0) {
-				auto s = static_cast<uint8_t>(std::min(atoi(argv[i + 1]), 255));
-				//				SetSpeed(s);
-				sam.setSpeed(s);
+				sam.setSpeed(static_cast<uint8_t>(std::min(atoi(argv[i + 1]), 255)));
 				i++;
 			} else if (strcmp(&argv[i][1], "mouth") == 0) {
-				auto m = static_cast<uint8_t>(std::min(atoi(argv[i + 1]), 255));
-				//				SetMouth(m);
-				sam.setMouth(m);
+				sam.setMouth(static_cast<uint8_t>(std::min(atoi(argv[i + 1]), 255)));
 				i++;
 			} else if (strcmp(&argv[i][1], "throat") == 0) {
-				auto t = static_cast<uint8_t>(std::min(atoi(argv[i + 1]), 255));
-				//				SetThroat(t);
-				sam.setThroat(t);
+				sam.setThroat(static_cast<uint8_t>(std::min(atoi(argv[i + 1]), 255)));
 				i++;
 			} else {
 				printUsage();
