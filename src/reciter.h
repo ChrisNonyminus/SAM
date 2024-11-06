@@ -1,22 +1,25 @@
 #pragma once
 
+#include <cstdint>
+#include <string>
+
 class Reciter {
 public:
 	Reciter()  = default;
 	~Reciter() = default;
 
-	[[nodiscard]] bool textToPhonemes(unsigned char *input);
+	[[nodiscard]] bool textToPhonemes(uint8_t *input);
 
 private:
-	[[nodiscard]] unsigned char getCode37055(unsigned char npos, unsigned char mask);
+	[[nodiscard]] uint8_t getCode37055(uint8_t position, uint8_t mask);
 	[[nodiscard]] unsigned int match(const char *str);
-	[[nodiscard]] static unsigned char getRuleByte(unsigned short mem62, unsigned char Y);
-	[[nodiscard]] int handleCH(unsigned char ch, unsigned char mem);
-	[[nodiscard]] int handleCH2(unsigned char ch, unsigned char mem);
+	[[nodiscard]] static uint8_t getRuleByte(unsigned short mem62, uint8_t Y);
+	[[nodiscard]] int handleCH(uint8_t ch, uint8_t mem);
+	[[nodiscard]] int handleCH2(uint8_t ch, uint8_t mem);
 
-	unsigned char A;
-	unsigned char X;
+	uint8_t A;
+	uint8_t X;
 
 	static constexpr auto inputTempBufferSize = 256;
-	unsigned char inputTemp[inputTempBufferSize];
+	uint8_t inputTemp[inputTempBufferSize]	  = {0};
 };

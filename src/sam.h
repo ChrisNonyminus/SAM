@@ -12,20 +12,28 @@ public:
 	static constexpr auto maxLengthInSeconds = 10;
 	static constexpr auto bufferLength		 = sampleRate * maxLengthInSeconds;
 
-	void setInput(const std::string &input);
+	Sam();
+
 	void setSpeed(uint8_t speed);
 	void setPitch(uint8_t pitch);
 	void setMouth(uint8_t mouth);
 	void setThroat(uint8_t throat);
 	void setMode(Mode mode);
 
-	[[nodiscard]] bool process();
+	[[nodiscard]] bool process(const std::string &input);
 
-	const std::array<char, bufferLength> &getBuffer() const;
+	[[nodiscard]] const std::array<char, bufferLength> &getBuffer() const;
+	[[nodiscard]] size_t getBufferSize() const;
 
 private:
-	static constexpr auto phonemeSize = 256;
-	static constexpr auto outputSize  = 60;
+	static constexpr auto phonemeSize		= 256;
+	static constexpr auto outputSize		= 60;
+	static constexpr auto phonemePeriod		= 1;
+	static constexpr auto phonemeQuestion	= 2;
+	static constexpr auto risingInflection	= 1;
+	static constexpr auto fallingInflection = 255;
+
+	enum { pR = 23, pD = 57, pT = 69, BREAK = 254, END = 255 };
 
 	void reset();
 	void prepareOutput();
@@ -102,15 +110,3 @@ private:
 	uint8_t freq1Data[sam::render_tables::freq1DataSize] = {0};
 	uint8_t freq2Data[sam::render_tables::freq2DataSize] = {0};
 };
-
-void SetInput(unsigned char *_input);
-void SetSpeed(unsigned char _speed);
-void SetPitch(unsigned char _pitch);
-void SetMouth(unsigned char _mouth);
-void SetThroat(unsigned char _throat);
-void EnableSingmode();
-
-int SAMMain();
-
-char *GetBuffer();
-int GetBufferLength();

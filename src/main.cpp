@@ -2,64 +2,21 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <algorithm>
 
 #include "reciter.h"
 #include "sam.h"
-
-#ifdef USESDL
-#	include <SDL.h>
-#	include <SDL_audio.h>
-#endif
+#include "WavWriter.h"
+#include "SDLOutput.h"
 
 #if defined __GNU_LIBRARY__ || defined __GLIBC__ || defined __APPLE__
-static int min(int l, int r) {
-	return l < r ? l : r;
-}
 static void strcat_s(char *dest, int size, char *str) {
 	unsigned int dlen = strlen(dest);
 	if (dlen >= size - 1) return;
 	strncat(dest + dlen, str, size - dlen - 1);
 }
-void fopen_s(FILE **f, const char *filename, const char *mode) {
-	*f = fopen(filename, mode);
-}
+
 #endif
-
-void WriteWav(char *filename, const char *buffer, int bufferlength) {
-	unsigned int filesize;
-	unsigned int fmtlength			 = 16;
-	unsigned short int format		 = 1;
-	unsigned short int channels		 = 1;
-	unsigned int samplerate			 = 22050;
-	unsigned short int blockalign	 = 1;
-	unsigned short int bitspersample = 8;
-
-	FILE *file;
-	fopen_s(&file, filename, "wb");
-	if (file == NULL) return;
-	//RIFF header
-	fwrite("RIFF", 4, 1, file);
-	filesize = bufferlength + 12 + 16 + 8 - 8;
-	fwrite(&filesize, 4, 1, file);
-	fwrite("WAVE", 4, 1, file);
-
-	//format chunk
-	fwrite("fmt ", 4, 1, file);
-	fwrite(&fmtlength, 4, 1, file);
-	fwrite(&format, 2, 1, file);
-	fwrite(&channels, 2, 1, file);
-	fwrite(&samplerate, 4, 1, file);
-	fwrite(&samplerate, 4, 1, file); // bytes/second
-	fwrite(&blockalign, 2, 1, file);
-	fwrite(&bitspersample, 2, 1, file);
-
-	//data chunk
-	fwrite("data", 4, 1, file);
-	fwrite(&bufferlength, 4, 1, file);
-	fwrite(buffer, bufferlength, 1, file);
-
-	fclose(file);
-}
 
 void printUsage() {
 	printf("usage: sam [options] Word1 Word2 ....\n");
@@ -104,55 +61,6 @@ void printUsage() {
 	printf("Q            kitt-en (glottal stop)    /H        a(h)ead	\n");
 }
 
-#ifdef USESDL
-
-int pos = 0;
-void MixAudio(void *unused, Uint8 *stream, int len) {
-	int bufferpos = GetBufferLength();
-	char *buffer  = GetBuffer();
-	int i;
-	if (pos >= bufferpos) return;
-	if ((bufferpos - pos) < len) len = (bufferpos - pos);
-	for (i = 0; i < len; i++) {
-		stream[i] = buffer[pos];
-		pos++;
-	}
-}
-
-void OutputSound() {
-	int bufferpos = GetBufferLength();
-	bufferpos /= 50;
-	SDL_AudioSpec fmt;
-
-	fmt.freq	 = 22050;
-	fmt.format	 = AUDIO_U8;
-	fmt.channels = 1;
-	fmt.samples	 = 2048;
-	fmt.callback = MixAudio;
-	fmt.userdata = NULL;
-
-	/* Open the audio device and start playing sound! */
-	if (SDL_OpenAudio(&fmt, NULL) < 0) {
-		printf("Unable to open audio: %s\n", SDL_GetError());
-		exit(1);
-	}
-	SDL_PauseAudio(0);
-	//SDL_Delay((bufferpos)/7);
-
-	while (pos < bufferpos) {
-		SDL_Delay(100);
-	}
-
-	SDL_CloseAudio();
-}
-
-#else
-
-void OutputSound() {
-}
-
-#endif
-
 int main(int argc, char **argv) {
 	int i;
 	int phonetic = 0;
@@ -181,28 +89,28 @@ int main(int argc, char **argv) {
 				wavfilename = argv[i + 1];
 				i++;
 			} else if (strcmp(&argv[i][1], "sing") == 0) {
-				EnableSingmode();
+				//				EnableSingmode();
 				sam.setMode(Sam::Mode::Singing);
 			} else if (strcmp(&argv[i][1], "phonetic") == 0) {
 				phonetic = 1;
 			} else if (strcmp(&argv[i][1], "pitch") == 0) {
-				auto p = static_cast<uint8_t>(min(atoi(argv[i + 1]), 255));
-				SetPitch(p);
+				auto p = static_cast<uint8_t>(std::min(atoi(argv[i + 1]), 255));
+				//				SetPitch(p);
 				sam.setPitch(p);
 				i++;
 			} else if (strcmp(&argv[i][1], "speed") == 0) {
-				auto s = static_cast<uint8_t>(min(atoi(argv[i + 1]), 255));
-				SetSpeed(s);
+				auto s = static_cast<uint8_t>(std::min(atoi(argv[i + 1]), 255));
+				//				SetSpeed(s);
 				sam.setSpeed(s);
 				i++;
 			} else if (strcmp(&argv[i][1], "mouth") == 0) {
-				auto m = static_cast<uint8_t>(min(atoi(argv[i + 1]), 255));
-				SetMouth(m);
+				auto m = static_cast<uint8_t>(std::min(atoi(argv[i + 1]), 255));
+				//				SetMouth(m);
 				sam.setMouth(m);
 				i++;
 			} else if (strcmp(&argv[i][1], "throat") == 0) {
-				auto t = static_cast<uint8_t>(min(atoi(argv[i + 1]), 255));
-				SetThroat(t);
+				auto t = static_cast<uint8_t>(std::min(atoi(argv[i + 1]), 255));
+				//				SetThroat(t);
 				sam.setThroat(t);
 				i++;
 			} else {
@@ -214,41 +122,31 @@ int main(int argc, char **argv) {
 		i++;
 	} //while
 
+	std::string inputStr {reinterpret_cast<const char *>(input), inputLength};
+	std::transform(inputStr.begin(), inputStr.end(), inputStr.begin(), ::toupper);
+
 	for (i = 0; input[i] != 0; i++)
 		input[i] = (unsigned char) toupper((int) input[i]);
 
 	if (!phonetic) {
 		strcat_s((char *) input, inputLength, "[");
 
-		if (!Reciter {}.textToPhonemes(input)) return 1;
-	} else strcat_s((char *) input, inputLength, "\x9b");
-
-#ifdef USESDL
-	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-		printf("Unable to init SDL: %s\n", SDL_GetError());
-		exit(1);
-	}
-	atexit(SDL_Quit);
-#endif
-
-	SetInput(input);
-	sam.setInput({reinterpret_cast<const char *>(input), inputLength});
-
-	if (!SAMMain()) {
-		printUsage();
-		return 1;
-	}
-
-	if (!sam.process()) {
-		printUsage();
-		return 1;
-	}
-
-	if (wavfilename != NULL) {
-		WriteWav(wavfilename, sam.getBuffer().data(), GetBufferLength() / 50);
-		//		WriteWav(wavfilename, GetBuffer(), GetBufferLength() / 50);
+		if (!Reciter {}.textToPhonemes(input)) {
+			return 1;
+		}
 	} else {
-		OutputSound();
+		strcat_s((char *) input, inputLength, "\x9b");
+	}
+
+	if (!sam.process({reinterpret_cast<const char *>(input), inputLength})) {
+		printUsage();
+		return 1;
+	}
+
+	if (wavfilename != nullptr) {
+		WavWriter {}.write(wavfilename, sam.getBuffer().data(), sam.getBufferSize());
+	} else {
+		SDLOutput {}.output(sam.getBuffer().data(), sam.getBufferSize());
 	}
 
 	return 0;

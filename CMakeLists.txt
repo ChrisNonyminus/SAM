@@ -6,14 +6,12 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(SRC_DIR src)
 
-set(SOURCES ${SRC_DIR}/reciter.cpp ${SRC_DIR}/sam.cpp ${SRC_DIR}/render.cpp
-    ${SRC_DIR}/processframes.cpp ${SRC_DIR}/createtransitions.cpp
-    src/tables.cpp)
-
-set(HEADERS
-    ${SRC_DIR}/tables.h ${SRC_DIR}/reciter.h ${SRC_DIR}/sam.h
-    ${SRC_DIR}/render.h ${SRC_DIR}/processframes.h
-    ${SRC_DIR}/createtransitions.h)
+set(SOURCES ${SRC_DIR}/reciter.cpp ${SRC_DIR}/sam.cpp
+    src/WavWriter.cpp
+    src/WavWriter.h
+    src/SDLOutput.cpp
+    src/SDLOutput.h)
+set(HEADERS ${SRC_DIR}/tables.h ${SRC_DIR}/reciter.h ${SRC_DIR}/sam.h)
 
 option(USE_SDL "Build with SDL support" OFF)
 

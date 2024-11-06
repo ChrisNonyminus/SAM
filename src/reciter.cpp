@@ -1,22 +1,22 @@
-//#include <cstdio>
+//
 //#include <cstring>
 #include "reciter.h"
 #include "tables.h"
 
-//unsigned char A, X;
+//uint8_t A, X;
 //
-//static unsigned char inputTemp[256]; // secure copy of input tab36096
+//static uint8_t inputTemp[256]; // secure copy of input tab36096
 
 /* Retrieve flags for character at mem59-1 */
-unsigned char Reciter::getCode37055(unsigned char position, unsigned char mask) {
+uint8_t Reciter::getCode37055(uint8_t position, uint8_t mask) {
 	X = position;
 	return sam::reciter_tables::tab36376[inputTemp[X]] & mask;
 }
 
 unsigned int Reciter::match(const char *str) {
 	while (*str) {
-		unsigned char ch = *str;
-		A				 = inputTemp[X++];
+		uint8_t ch = *str;
+		A		   = inputTemp[X++];
 		if (A != ch) {
 			return 0;
 		}
@@ -25,7 +25,7 @@ unsigned int Reciter::match(const char *str) {
 	return 1;
 }
 
-unsigned char Reciter::getRuleByte(unsigned short mem62, unsigned char Y) {
+uint8_t Reciter::getRuleByte(unsigned short mem62, uint8_t Y) {
 	unsigned int address = mem62;
 	if (mem62 >= 37541) {
 		address -= 37541;
@@ -35,8 +35,8 @@ unsigned char Reciter::getRuleByte(unsigned short mem62, unsigned char Y) {
 	return sam::reciter_tables::rules[address + Y];
 }
 
-int Reciter::handleCH2(unsigned char ch, unsigned char mem) {
-	unsigned char tmp;
+int Reciter::handleCH2(uint8_t ch, uint8_t mem) {
+	uint8_t tmp;
 	X	= mem;
 	tmp = sam::reciter_tables::tab36376[inputTemp[mem]];
 	if (ch == ' ') {
@@ -51,8 +51,8 @@ int Reciter::handleCH2(unsigned char ch, unsigned char mem) {
 	return 0;
 }
 
-int Reciter::handleCH(unsigned char ch, unsigned char mem) {
-	unsigned char tmp;
+int Reciter::handleCH(uint8_t ch, uint8_t mem) {
+	uint8_t tmp;
 	X	= mem;
 	tmp = sam::reciter_tables::tab36376[inputTemp[X]];
 	if (ch == ' ') {
@@ -76,20 +76,20 @@ int Reciter::handleCH(unsigned char ch, unsigned char mem) {
 	return 0;
 }
 
-bool Reciter::textToPhonemes(unsigned char *input) {
-	unsigned char mem56; //output position for phonemes
-	unsigned char mem57;
-	unsigned char mem58;
-	unsigned char mem59;
-	unsigned char mem60;
-	unsigned char mem61;
+bool Reciter::textToPhonemes(uint8_t *input) {
+	uint8_t mem56; //output position for phonemes
+	uint8_t mem57;
+	uint8_t mem58;
+	uint8_t mem59;
+	uint8_t mem60;
+	uint8_t mem61;
 	unsigned short mem62; // memory position of current rule
 
-	unsigned char mem64; // position of '=' or current character
-	unsigned char mem65; // position of ')'
-	unsigned char mem66; // position of '('
+	uint8_t mem64; // position of '=' or current character
+	uint8_t mem65; // position of ')'
+	uint8_t mem66; // position of '('
 
-	unsigned char Y;
+	uint8_t Y;
 
 	int r;
 
@@ -179,7 +179,7 @@ pos36700:
 	mem59 = mem61;
 
 	while (true) {
-		unsigned char ch;
+		uint8_t ch;
 		while (true) {
 			mem66--;
 			mem57 = getRuleByte(mem62, mem66);
