@@ -1,5 +1,4 @@
-#ifndef SAMTABS_H
-#define SAMTABS_H
+#pragma once
 
 //tab40672
 unsigned char stressInputTable[] =
@@ -211,5 +210,3 @@ SPECIAL
 31   |  Q*     | 01001100 |
 
 */
-
-#endif

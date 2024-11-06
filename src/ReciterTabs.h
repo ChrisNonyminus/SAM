@@ -1,5 +1,4 @@
-#ifndef RECITERTABS_H
-#define RECITERTABS_H
+#pragma once
 
 //some flags
 unsigned char tab36376[] = 
@@ -542,5 +541,3 @@ unsigned char tab37515[] =
 135, 136, 136, 137, 138, 139, 139, 140,
 140, 140
 };
-
-#endif
