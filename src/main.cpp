@@ -4,7 +4,7 @@
 #include <string.h>
 #include <algorithm>
 
-#include "reciter.h"
+#include "PhonemeConvertor.h"
 #include "Sam.h"
 #include "WavWriter.h"
 #include "SDLOutput.h"
@@ -122,9 +122,10 @@ int main(int argc, char **argv) {
 	if (!phonetic) {
 		strcat_s((char *) input, inputLength, "[");
 
-		if (!Reciter {}.textToPhonemes(input)) {
+		if (!PhonemeConvertor {}.textToPhonemes(input)) {
 			return 1;
 		}
+
 	} else {
 		strcat_s((char *) input, inputLength, "\x9b");
 	}

@@ -1,12 +1,12 @@
-#include "reciter.h"
+#include "PhonemeConvertor.h"
 #include "tables.h"
 
-uint8_t Reciter::getCode37055(uint8_t position, uint8_t mask) {
+uint8_t PhonemeConvertor::getCode37055(uint8_t position, uint8_t mask) {
 	writePosition = position;
-	return sam::reciter_tables::tab36376[inputTemp[writePosition]] & mask;
+	return sam::phonemes::tab36376[inputTemp[writePosition]] & mask;
 }
 
-unsigned int Reciter::match(const char *str) {
+unsigned int PhonemeConvertor::match(const char *str) {
 	while (*str) {
 		uint8_t ch = *str;
 		A		   = inputTemp[writePosition++];
@@ -18,20 +18,20 @@ unsigned int Reciter::match(const char *str) {
 	return 1;
 }
 
-uint8_t Reciter::getRuleByte(unsigned short mem62, uint8_t Y) {
+uint8_t PhonemeConvertor::getRuleByte(unsigned short mem62, uint8_t Y) {
 	unsigned int address = mem62;
 	if (mem62 >= 37541) {
 		address -= 37541;
-		return sam::reciter_tables::rules2[address + Y];
+		return sam::phonemes::rules2[address + Y];
 	}
 	address -= 32000;
-	return sam::reciter_tables::rules[address + Y];
+	return sam::phonemes::rules[address + Y];
 }
 
-int Reciter::handleCH2(uint8_t ch, uint8_t mem) {
+int PhonemeConvertor::handleCH2(uint8_t ch, uint8_t mem) {
 	uint8_t tmp;
 	writePosition = mem;
-	tmp			  = sam::reciter_tables::tab36376[inputTemp[mem]];
+	tmp			  = sam::phonemes::tab36376[inputTemp[mem]];
 	if (ch == ' ') {
 		if (tmp & 128) {
 			return 1;
@@ -54,10 +54,10 @@ int Reciter::handleCH2(uint8_t ch, uint8_t mem) {
 	return 0;
 }
 
-int Reciter::handleCH(uint8_t ch, uint8_t mem) {
+int PhonemeConvertor::handleCH(uint8_t ch, uint8_t mem) {
 	uint8_t tmp;
 	writePosition = mem;
-	tmp			  = sam::reciter_tables::tab36376[inputTemp[writePosition]];
+	tmp			  = sam::phonemes::tab36376[inputTemp[writePosition]];
 	if (ch == ' ') {
 		if ((tmp & 128) != 0) {
 			return 1;
@@ -93,7 +93,24 @@ int Reciter::handleCH(uint8_t ch, uint8_t mem) {
 	return 0;
 }
 
-bool Reciter::textToPhonemes(uint8_t *input) {
+std::string PhonemeConvertor::textToPhonemes(const std::string &input) {
+	uint8_t buffer[inputTempBufferSize];
+	std::memset(buffer, 0, sizeof(buffer));
+
+	size_t copyLength = std::min(input.size(), sizeof(buffer) - 1);
+	std::memcpy(buffer, input.data(), copyLength);
+	buffer[copyLength] = '\0';
+
+	bool success = this->textToPhonemes(buffer);
+
+	if (!success) {
+		return {};
+	}
+
+	return std::string(reinterpret_cast<char *>(buffer));
+}
+
+bool PhonemeConvertor::textToPhonemes(uint8_t *input) {
 	uint8_t mem56; //output position for phonemes
 	uint8_t mem57;
 	uint8_t mem58;
@@ -137,14 +154,14 @@ pos36554:
 
 			if (mem64 != '.') break;
 			writePosition++;
-			A = sam::reciter_tables::tab36376[inputTemp[writePosition]] & 1;
+			A = sam::phonemes::tab36376[inputTemp[writePosition]] & 1;
 			if (A != 0) break;
 			mem56++;
 			writePosition		 = mem56;
 			A					 = '.';
 			input[writePosition] = '.';
 		}
-		mem57 = sam::reciter_tables::tab36376[mem64];
+		mem57 = sam::phonemes::tab36376[mem64];
 		if ((mem57 & 2) != 0) {
 			mem62 = 37541;
 			goto pos36700;
@@ -164,7 +181,7 @@ pos36554:
 
 	// go to the right rules for this character.
 	writePosition = mem64 - 'A';
-	mem62 = sam::reciter_tables::tab37489[writePosition] | (sam::reciter_tables::tab37515[writePosition] << 8);
+	mem62		  = sam::phonemes::tab37489[writePosition] | (sam::phonemes::tab37515[writePosition] << 8);
 
 pos36700:
 	// find next rule
@@ -205,7 +222,7 @@ pos36700:
 				goto pos37184;
 			}
 			writePosition = mem57 & 127;
-			if ((sam::reciter_tables::tab36376[writePosition] & 128) == 0) break;
+			if ((sam::phonemes::tab36376[writePosition] & 128) == 0) break;
 			if (inputTemp[mem59 - 1] != mem57) goto pos36700;
 			--mem59;
 		}
@@ -253,7 +270,7 @@ pos36700:
 	do {
 		writePosition = mem58 + 1;
 		if (inputTemp[writePosition] == 'E') {
-			if ((sam::reciter_tables::tab36376[inputTemp[writePosition + 1]] & 128) != 0) {
+			if ((sam::phonemes::tab36376[inputTemp[writePosition + 1]] & 128) != 0) {
 				A = inputTemp[++writePosition];
 				if (A == 'L') {
 					if (inputTemp[++writePosition] != 'Y') goto pos36700;
@@ -282,7 +299,7 @@ pos36700:
 				}
 				mem65 = Y;
 				mem57 = getRuleByte(mem62, Y);
-				if ((sam::reciter_tables::tab36376[mem57] & 128) == 0) break;
+				if ((sam::phonemes::tab36376[mem57] & 128) == 0) break;
 				if (inputTemp[mem58 + 1] != mem57) {
 					r = 1;
 					break;

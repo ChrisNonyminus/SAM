@@ -1569,7 +1569,7 @@ namespace sam {
 															 0,
 															 0xFC};
 	} // namespace render_tables
-	namespace reciter_tables {
+	namespace phonemes {
 		//some flags
 		static constexpr unsigned char tab36376[] = {
 			0,	 0,	  0,   0,	0,	 0,	  0,   0, // 0-7
@@ -2196,7 +2196,7 @@ namespace sam {
 													 132, 132, 132, 132, 132, 133, 135, 135, 136,
 													 136, 137, 138, 139, 139, 140, 140, 140};
 
-	} // namespace reciter_tables
+	} // namespace phonemes
 } // namespace sam
 
 #if defined __GNU_LIBRARY__ || defined __GLIBC__ || defined __APPLE__

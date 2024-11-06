@@ -3,12 +3,13 @@
 #include <cstdint>
 #include <string>
 
-class Reciter {
+class PhonemeConvertor {
 public:
-	Reciter()  = default;
-	~Reciter() = default;
+	PhonemeConvertor()	= default;
+	~PhonemeConvertor() = default;
 
 	[[nodiscard]] bool textToPhonemes(uint8_t *input);
+	[[nodiscard]] std::string textToPhonemes(const std::string &input);
 
 private:
 	[[nodiscard]] uint8_t getCode37055(uint8_t position, uint8_t mask);

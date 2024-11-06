@@ -6,9 +6,9 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(SRC_DIR src)
 
-set(SOURCES ${SRC_DIR}/reciter.cpp ${SRC_DIR}/Sam.cpp src/WavWriter.cpp
-            src/WavWriter.h src/SDLOutput.cpp src/SDLOutput.h)
-set(HEADERS ${SRC_DIR}/tables.h ${SRC_DIR}/reciter.h ${SRC_DIR}/Sam.h)
+set(SOURCES ${SRC_DIR}/PhonemeConvertor.cpp ${SRC_DIR}/Sam.cpp
+            src/WavWriter.cpp src/WavWriter.h src/SDLOutput.cpp src/SDLOutput.h)
+set(HEADERS ${SRC_DIR}/tables.h ${SRC_DIR}/PhonemeConvertor.h ${SRC_DIR}/Sam.h)
 
 option(USE_SDL "Build with SDL support" OFF)
 
