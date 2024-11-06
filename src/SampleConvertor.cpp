@@ -1,7 +1,7 @@
 #include "SampleConvertor.h"
 
 std::vector<float>
-	SampleConvertor::convert(const uint8_t *inputBuffer, size_t inputSize, unsigned int targetSampleRate) {
+	SampleConvertor::convert(const char *inputBuffer, size_t inputSize, unsigned int targetSampleRate) {
 	static constexpr auto originalSampleRate = 22050;
 
 	auto floatBuffer	 = convertUint8ToFloat(inputBuffer, inputSize);
@@ -10,7 +10,7 @@ std::vector<float>
 	return resampledBuffer;
 }
 
-std::vector<float> SampleConvertor::convertUint8ToFloat(const uint8_t *inputBuffer, size_t inputSize) {
+std::vector<float> SampleConvertor::convertUint8ToFloat(const char *inputBuffer, size_t inputSize) {
 	std::vector<float> floatBuffer;
 	floatBuffer.reserve(inputSize);
 	for (size_t i = 0; i < inputSize; ++i) {
