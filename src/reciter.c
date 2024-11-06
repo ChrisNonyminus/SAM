@@ -2,10 +2,10 @@
 #include <string.h>
 #include "reciter.h"
 #include "ReciterTabs.h"
-#include "debug.h"
+
 
 unsigned char A, X;
-extern int debug;
+
 
 static unsigned char inputtemp[256];   // secure copy of input tab36096
 
@@ -254,9 +254,7 @@ pos37184:
                 Y = mem65 + 1;
                 if(Y == mem64) {
                     mem61 = mem60;
-                    
-                    if (debug) PrintRule(mem62);
-                    
+
                     while(1) {
                         mem57 = A = GetRuleByte(mem62, Y);
                         A = A & 127;

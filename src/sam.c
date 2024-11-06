@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "debug.h"
+
 #include "sam.h"
 #include "render.h"
 #include "SamTabs.h"
@@ -23,7 +23,7 @@ unsigned char mouth = 128;
 unsigned char throat = 128;
 int singmode = 0;
 
-extern int debug;
+
 
 unsigned char stress[256]; //numbers from 0 to 8
 unsigned char phonemeLength[256]; //tab40160
@@ -97,7 +97,6 @@ int SAMMain() {
 	phonemeindex[255] = 32; //to prevent buffer overflow
 
 	if (!Parser1()) return 0;
-	if (debug) PrintPhonemes(phonemeindex, phonemeLength, stress);
 	Parser2();
 	CopyStress();
 	SetPhonemeLength();
@@ -111,7 +110,6 @@ int SAMMain() {
 	} while (++X != 0);
 	InsertBreath();
 
-	if (debug) PrintPhonemes(phonemeindex, phonemeLength, stress);
 
 	PrepareOutput();
 	return 1;
@@ -389,28 +387,18 @@ void Code41240() {
 
 void ChangeRule(unsigned char position, unsigned char mem60, const char * descr)
 {
-    if (debug) printf("RULE: %s\n",descr);
     phonemeindex[position] = 13; //rule;
     Insert(position+1, mem60, 0, stress[position]);
 }
 
 void drule(const char * str) {
-    if (debug) printf("RULE: %s\n",str);
 }
 
 void drule_pre(const char *descr, unsigned char X) {
     drule(descr);
-    if (debug) {
-        printf("PRE\n");
-        printf("phoneme %d (%c%c) length %d\n", X, signInputTable1[phonemeindex[X]], signInputTable2[phonemeindex[X]], phonemeLength[X]);
-    }
 }
 
 void drule_post(unsigned char X) {
-    if (debug) {
-        printf("POST\n");
-        printf("phoneme %d (%c%c) length %d\n", X, signInputTable1[phonemeindex[X]], signInputTable2[phonemeindex[X]], phonemeLength[X]);
-    }
 }
 
 
@@ -500,13 +488,9 @@ void Parser2() {
 	unsigned char pos = 0; //mem66;
     unsigned char p;
 
-	if (debug) printf("Parser2\n");
-
 	while((p = phonemeindex[pos]) != END) {
 		unsigned short pf;
 		unsigned char prior;
-
-		if (debug) printf("%d: %c%c\n", pos, signInputTable1[p], signInputTable2[p]);
 
 		if (p == 0) { // Is phoneme pause?
 			++pos;
@@ -563,8 +547,7 @@ void Parser2() {
                 //      S K -> S G
                 //      S KX -> S GX
                 // Examples: SPY, STY, SKY, SCOWL
-                
-                if (debug) printf("RULE: S* %c%c -> S* %c%c\n", signInputTable1[p], signInputTable2[p],signInputTable1[p-12], signInputTable2[p-12]);
+
                 phonemeindex[pos] = p-12;
             } else if (!(pf & FLAG_PLOSIVE)) {
                 p = phonemeindex[pos];
@@ -632,7 +615,7 @@ void AdjustLengths() {
 			index = phonemeindex[X];
 
 			// test for fricative/unvoiced or not voiced
-			if(!(flags[index] & FLAG_FRICATIVE) || (flags[index] & FLAG_VOICED)) {     //nochmal überprüfen
+			if(!(flags[index] & FLAG_FRICATIVE) || (flags[index] & FLAG_VOICED)) {     //nochmal ï¿½berprï¿½fen
 				unsigned char A = phonemeLength[X];
 				// change phoneme length to (length * 1.5) + 1
                 drule_pre("Lengthen <FRICATIVE> or <VOICED> between <VOWEL> and <PUNCTUATION> by 1.5",X);

@@ -4,15 +4,11 @@ project(sam C)
 
 set(SRC_DIR src)
 
-set(SOURCES
-    ${SRC_DIR}/reciter.c ${SRC_DIR}/sam.c ${SRC_DIR}/render.c
-    ${SRC_DIR}/debug.c ${SRC_DIR}/processframes.c
-    ${SRC_DIR}/createtransitions.c)
+set(SOURCES ${SRC_DIR}/reciter.c ${SRC_DIR}/sam.c ${SRC_DIR}/render.c
+            ${SRC_DIR}/processframes.c ${SRC_DIR}/createtransitions.c)
 
-set(HEADERS
-    ${SRC_DIR}/reciter.h ${SRC_DIR}/sam.h ${SRC_DIR}/render.h
-    ${SRC_DIR}/debug.h ${SRC_DIR}/processframes.h
-    ${SRC_DIR}/createtransitions.h)
+set(HEADERS ${SRC_DIR}/reciter.h ${SRC_DIR}/sam.h ${SRC_DIR}/render.h
+            ${SRC_DIR}/processframes.h ${SRC_DIR}/createtransitions.h)
 
 option(USE_SDL "Build with SDL support" OFF)
 
