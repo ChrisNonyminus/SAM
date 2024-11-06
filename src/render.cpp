@@ -204,30 +204,16 @@ static void CreateFrames() {
 	}
 }
 
-// RESCALE AMPLITUDE
-//
-// Rescale volume from a linear scale to decibels.
-//
 void RescaleAmplitude() {
-	int i;
-	for (i = 255; i >= 0; i--) {
+	for (int i = 255; i >= 0; i--) {
 		amplitude1[i] = sam::render_tables::amplitudeRescale[amplitude1[i]];
 		amplitude2[i] = sam::render_tables::amplitudeRescale[amplitude2[i]];
 		amplitude3[i] = sam::render_tables::amplitudeRescale[amplitude3[i]];
 	}
 }
 
-// ASSIGN PITCH CONTOUR
-//
-// This subtracts the F1 frequency from the pitch to create a
-// pitch contour. Without this, the output would be at a single
-// pitch level (monotone).
-
 void AssignPitchContour() {
-	int i;
-	for (i = 0; i < 256; i++) {
-		// subtract half the frequency of the formant 1.
-		// this adds variety to the voice
+	for (int i = 0; i < 256; i++) {
 		pitches[i] -= (frequency1[i] >> 1);
 	}
 }

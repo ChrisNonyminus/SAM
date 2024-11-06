@@ -25,7 +25,7 @@ void fopen_s(FILE **f, const char *filename, const char *mode) {
 }
 #endif
 
-void WriteWav(char *filename, char *buffer, int bufferlength) {
+void WriteWav(char *filename, const char *buffer, int bufferlength) {
 	unsigned int filesize;
 	unsigned int fmtlength			 = 16;
 	unsigned short int format		 = 1;
@@ -61,7 +61,7 @@ void WriteWav(char *filename, char *buffer, int bufferlength) {
 	fclose(file);
 }
 
-void PrintUsage() {
+void printUsage() {
 	printf("usage: sam [options] Word1 Word2 ....\n");
 	printf("options\n");
 	printf("	-phonetic 		enters phonetic mode. (see below)\n");
@@ -71,7 +71,6 @@ void PrintUsage() {
 	printf("	-mouth number		set mouth value (default=128)\n");
 	printf("	-wav filename		output to wav instead of libsdl\n");
 	printf("	-sing			special treatment of pitch\n");
-	printf("	-debug			print additional debug messages\n");
 	printf("\n");
 
 	printf("     VOWELS                            VOICED CONSONANTS	\n");
@@ -154,51 +153,60 @@ void OutputSound() {
 
 #endif
 
-int debug = 0;
-
 int main(int argc, char **argv) {
 	int i;
 	int phonetic = 0;
 
 	char *wavfilename = NULL;
-	unsigned char input[256];
 
-	memset(input, 0, 256);
+	static constexpr auto inputLength = 256;
+	unsigned char input[inputLength];
+
+	memset(input, 0, inputLength);
+
+	Sam sam;
 
 	if (argc <= 1) {
-		PrintUsage();
+		printUsage();
 		return 1;
 	}
 
 	i = 1;
 	while (i < argc) {
 		if (argv[i][0] != '-') {
-			strcat_s((char *) input, 256, argv[i]);
-			strcat_s((char *) input, 256, " ");
+			strcat_s((char *) input, inputLength, argv[i]);
+			strcat_s((char *) input, inputLength, " ");
 		} else {
 			if (strcmp(&argv[i][1], "wav") == 0) {
 				wavfilename = argv[i + 1];
 				i++;
 			} else if (strcmp(&argv[i][1], "sing") == 0) {
 				EnableSingmode();
+				sam.setMode(Sam::Mode::Singing);
 			} else if (strcmp(&argv[i][1], "phonetic") == 0) {
 				phonetic = 1;
-			} else if (strcmp(&argv[i][1], "debug") == 0) {
-				debug = 1;
 			} else if (strcmp(&argv[i][1], "pitch") == 0) {
-				SetPitch((unsigned char) min(atoi(argv[i + 1]), 255));
+				auto p = static_cast<uint8_t>(min(atoi(argv[i + 1]), 255));
+				SetPitch(p);
+				sam.setPitch(p);
 				i++;
 			} else if (strcmp(&argv[i][1], "speed") == 0) {
-				SetSpeed((unsigned char) min(atoi(argv[i + 1]), 255));
+				auto s = static_cast<uint8_t>(min(atoi(argv[i + 1]), 255));
+				SetSpeed(s);
+				sam.setSpeed(s);
 				i++;
 			} else if (strcmp(&argv[i][1], "mouth") == 0) {
-				SetMouth((unsigned char) min(atoi(argv[i + 1]), 255));
+				auto m = static_cast<uint8_t>(min(atoi(argv[i + 1]), 255));
+				SetMouth(m);
+				sam.setMouth(m);
 				i++;
 			} else if (strcmp(&argv[i][1], "throat") == 0) {
-				SetThroat((unsigned char) min(atoi(argv[i + 1]), 255));
+				auto t = static_cast<uint8_t>(min(atoi(argv[i + 1]), 255));
+				SetThroat(t);
+				sam.setThroat(t);
 				i++;
 			} else {
-				PrintUsage();
+				printUsage();
 				return 1;
 			}
 		}
@@ -209,17 +217,11 @@ int main(int argc, char **argv) {
 	for (i = 0; input[i] != 0; i++)
 		input[i] = (unsigned char) toupper((int) input[i]);
 
-	if (debug) {
-		if (phonetic) printf("phonetic input: %s\n", input);
-		else printf("text input: %s\n", input);
-	}
-
 	if (!phonetic) {
-		strcat_s((char *) input, 256, "[");
+		strcat_s((char *) input, inputLength, "[");
 
 		if (!Reciter {}.textToPhonemes(input)) return 1;
-		if (debug) printf("phonetic input: %s\n", input);
-	} else strcat_s((char *) input, 256, "\x9b");
+	} else strcat_s((char *) input, inputLength, "\x9b");
 
 #ifdef USESDL
 	if (SDL_Init(SDL_INIT_AUDIO) < 0) {
@@ -230,13 +232,24 @@ int main(int argc, char **argv) {
 #endif
 
 	SetInput(input);
+	sam.setInput({reinterpret_cast<const char *>(input), inputLength});
+
 	if (!SAMMain()) {
-		PrintUsage();
+		printUsage();
 		return 1;
 	}
 
-	if (wavfilename != NULL) WriteWav(wavfilename, GetBuffer(), GetBufferLength() / 50);
-	else OutputSound();
+	if (!sam.process()) {
+		printUsage();
+		return 1;
+	}
+
+	if (wavfilename != NULL) {
+		WriteWav(wavfilename, sam.getBuffer().data(), GetBufferLength() / 50);
+		//		WriteWav(wavfilename, GetBuffer(), GetBufferLength() / 50);
+	} else {
+		OutputSound();
+	}
 
 	return 0;
 }
