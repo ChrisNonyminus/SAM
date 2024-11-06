@@ -14,8 +14,7 @@ std::vector<float> SampleConvertor::convertUint8ToFloat(const char *inputBuffer,
 	std::vector<float> floatBuffer;
 	floatBuffer.reserve(inputSize);
 	for (size_t i = 0; i < inputSize; ++i) {
-		float sample = (static_cast<float>(inputBuffer[i]) - 128.0f) / 128.0f;
-		floatBuffer.push_back(sample);
+		floatBuffer.push_back(static_cast<float>(inputBuffer[i]) / 128.0f);
 	}
 	return floatBuffer;
 }
