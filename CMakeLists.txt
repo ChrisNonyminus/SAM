@@ -4,12 +4,6 @@ project(sam)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(SRC_DIR src)
-
-set(SOURCES ${SRC_DIR}/PhonemeConvertor.cpp ${SRC_DIR}/Sam.cpp
-            src/WavWriter.cpp src/WavWriter.h src/SDLOutput.cpp src/SDLOutput.h)
-set(HEADERS ${SRC_DIR}/tables.h ${SRC_DIR}/PhonemeConvertor.h ${SRC_DIR}/Sam.h)
-
 option(USE_SDL "Build with SDL support" OFF)
 
 if(USE_SDL)
@@ -25,9 +19,21 @@ if(USE_SDL)
   endif()
 endif()
 
-include_directories(${SRC_DIR})
+include_directories(src)
 
-add_library(samlib STATIC ${SOURCES})
+add_library(
+  samlib STATIC
+  src/PhonemeConvertor.cpp
+  src/Sam.cpp
+  src/WavWriter.cpp
+  src/WavWriter.h
+  src/SDLOutput.cpp
+  src/SDLOutput.h
+  src/SampleConvertor.cpp
+  src/tables.h
+  src/PhonemeConvertor.h
+  src/Sam.h
+  src/SampleConvertor.h)
 
 target_compile_options(samlib PRIVATE -Wall -O2)
 
@@ -35,7 +41,7 @@ if(USE_SDL)
   target_link_libraries(samlib PUBLIC ${SDL_LIBRARY})
 endif()
 
-add_executable(sam ${SRC_DIR}/main.cpp)
+add_executable(sam src/main.cpp)
 
 target_link_libraries(sam PRIVATE samlib)
 target_compile_options(sam PRIVATE -Wall -O2)
