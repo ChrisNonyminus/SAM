@@ -12,7 +12,7 @@ public:
 	static constexpr auto maxLengthInSeconds = 10;
 	static constexpr auto bufferLength		 = sampleRate * maxLengthInSeconds;
 
-	Sam();
+	Sam() = default;
 
 	void setSpeed(uint8_t speed);
 	void setPitch(uint8_t pitch);

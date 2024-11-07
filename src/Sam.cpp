@@ -92,11 +92,8 @@ void Sam::checkForPhonemeEnd() {
 	}
 }
 
-Sam::Sam() {
-	reset();
-};
-
 bool Sam::process(const std::string &_input) {
+	reset();
 	input = _input;
 
 	if (!parser1()) {
