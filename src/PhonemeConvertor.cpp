@@ -94,16 +94,19 @@ int PhonemeConvertor::handleCH(uint8_t ch, uint8_t mem) {
 }
 
 std::string PhonemeConvertor::textToPhonemes(const std::string &input) {
+	auto inputString = input;
+	if (inputString.empty() || inputString.back() != '[') {
+		inputString += '[';
+	}
+
 	uint8_t buffer[inputTempBufferSize];
 	std::memset(buffer, 0, sizeof(buffer));
 
-	size_t copyLength = std::min(input.size(), sizeof(buffer) - 1);
-	std::memcpy(buffer, input.data(), copyLength);
+	size_t copyLength = std::min(inputString.size(), sizeof(buffer) - 1);
+	std::memcpy(buffer, inputString.data(), copyLength);
 	buffer[copyLength] = '\0';
 
-	bool success = this->textToPhonemes(buffer);
-
-	if (!success) {
+	if (!textToPhonemes(buffer)) {
 		return {};
 	}
 

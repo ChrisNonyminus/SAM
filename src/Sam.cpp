@@ -1,4 +1,31 @@
 #include "Sam.h"
+#include "PhonemeConvertor.h"
+#include "WavWriter.h"
+
+bool Sam::process(const std::string &input,
+				  const std::string &outputFilePath,
+				  uint8_t speed,
+				  uint8_t pitch,
+				  uint8_t mouth,
+				  uint8_t throat) {
+	Sam sam;
+	sam.setPitch(speed);
+	sam.setSpeed(pitch);
+	sam.setThroat(throat);
+	sam.setMouth(mouth);
+
+	if (!sam.process(PhonemeConvertor {}.textToPhonemes(input))) {
+		return false;
+	}
+
+	try {
+		WavWriter {}.write(outputFilePath, sam.getBuffer().data(), static_cast<int>(sam.getBufferSize()));
+	} catch (...) {
+		return false;
+	}
+
+	return true;
+}
 
 void Sam::setSpeed(uint8_t _speed) {
 	speed = _speed;
@@ -674,7 +701,6 @@ int Sam::parser1() {
 	return 1;
 }
 
-//change phonemelength depedendent on stress
 void Sam::setPhonemeLength() {
 	int position = 0;
 	while (phonemeIndex[position] != phonemeEndMarker) {
@@ -843,7 +869,7 @@ void Sam::parser2() {
 				uint8_t Y = phonemeIndex[pos + 1];
 				// If at end, replace current phoneme with KX
 				if ((sam::sam_tables::flags[Y] & sam::sam_tables::FLAG_DIP_YX) == 0
-					|| Y == END) { // VOWELS AND DIPTHONGS ENDING WITH IY SOUND flag set?
+					|| Y == END) { // VOWELS AND DIPTHONG ENDING WITH IY SOUND flag set?
 					change(
 						pos,
 						75,
@@ -903,10 +929,8 @@ void Sam::adjustLengths() {
 	//
 	// Search for punctuation. If found, back up to the first vowel, then
 	// process all phonemes between there and up to (but not including) the punctuation.
-	// If any phoneme is found that is a either a fricative or voiced, the duration is
+	// If any phoneme is found that is either a fricative or voiced, the duration is
 	// increased by (length * 1.5) + 1
-
-	// loop index
 	{
 		uint8_t X = 0;
 		uint8_t index;

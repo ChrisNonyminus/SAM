@@ -21,6 +21,12 @@ public:
 	void setMode(Mode mode);
 
 	[[nodiscard]] bool process(const std::string &input);
+	static bool process(const std::string &input,
+						const std::string &outputFilePath,
+						uint8_t speed,
+						uint8_t pitch,
+						uint8_t mouth,
+						uint8_t throat);
 
 	[[nodiscard]] const std::array<char, bufferLength> &getBuffer() const;
 	[[nodiscard]] size_t getBufferSize() const;
