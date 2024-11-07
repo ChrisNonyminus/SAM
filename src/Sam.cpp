@@ -9,8 +9,8 @@ bool Sam::process(const std::string &input,
 				  uint8_t mouth,
 				  uint8_t throat) {
 	Sam sam;
-	sam.setPitch(speed);
-	sam.setSpeed(pitch);
+	sam.setPitch(pitch);
+	sam.setSpeed(speed);
 	sam.setThroat(throat);
 	sam.setMouth(mouth);
 
