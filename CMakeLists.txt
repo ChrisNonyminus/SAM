@@ -24,16 +24,14 @@ include_directories(src)
 add_library(
   samlib STATIC
   src/PhonemeConvertor.cpp
+  src/PhonemeConvertor.h
   src/Sam.cpp
+  src/Sam.h
   src/WavWriter.cpp
   src/WavWriter.h
   src/SDLOutput.cpp
   src/SDLOutput.h
-  src/SampleConvertor.cpp
-  src/tables.h
-  src/PhonemeConvertor.h
-  src/Sam.h
-  src/SampleConvertor.h)
+  src/tables.h)
 
 target_compile_options(samlib PRIVATE -Wall -O2)
 
