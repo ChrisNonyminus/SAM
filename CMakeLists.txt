@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 
 project(sam)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 option(USE_SDL "Build with SDL support" OFF)
 
@@ -33,7 +33,6 @@ add_library(
   src/SDLOutput.h
   src/tables.h)
 
-target_compile_options(samlib PRIVATE -Wall -O2)
 
 if(USE_SDL)
   target_link_libraries(samlib PUBLIC ${SDL_LIBRARY})
@@ -42,4 +41,3 @@ endif()
 add_executable(sam src/main.cpp)
 
 target_link_libraries(sam PRIVATE samlib)
-target_compile_options(sam PRIVATE -Wall -O2)
